@@ -1,0 +1,49 @@
+{
+  "name": "cn-dev-mcp",
+  "version": "0.1.0",
+  "description": "面向中国开发者的离线 MCP 工具集：节假日调休、工作日计算、身份证/信用代码/手机号校验、拼音、农历、行政区划、uni-app/小程序/Element Plus/Vant 文档速查",
+  "main": "dist/server.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "build": "tsc && cp src/data/pca-code.json dist/data/ && chmod +x dist/index.js",
+    "test": "npm run build && node --test test/"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cursor",
+    "claude",
+    "trae",
+    "china",
+    "holiday",
+    "pinyin",
+    "lunar",
+    "uni-app"
+  ],
+  "author": "Theo（涛哥）",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "lunar-javascript": "^1.7.7",
+    "pinyin-pro": "^3.29.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  },
+  "type": "module",
+  "bin": {
+    "cn-dev-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": "github:MsNan/cn-dev-mcp"
+}
