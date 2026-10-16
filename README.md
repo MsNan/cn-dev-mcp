@@ -19,7 +19,7 @@
 
 ## 安装配置
 
-需要 Node.js 18 或更高版本。第一次启动时 npx 会先下载，大约需要十几秒。
+需要 Node.js 18 或更高版本，npm 10 或更高版本（`npm -v` 查看；npm 9 直接 npx GitHub 仓库可能会静默失败，用 `npm i -g npm@10` 升级即可）。第一次启动时 npx 会先下载，大约需要十几秒。
 
 ### Cursor
 在 `~/.cursor/mcp.json`（全局）或项目里的 `.cursor/mcp.json` 中添加：

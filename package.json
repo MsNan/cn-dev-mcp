@@ -43,7 +43,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=18", "npm": ">=10"
   },
   "repository": "github:MsNan/cn-dev-mcp"
 }
