@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      # dist/ 是提交到仓库里的（npx github:MsNan/cn-dev-mcp 直接用它），
+      # 这里确保它和 src/ 编译结果一致，避免改了源码忘记重新构建。
+      - name: dist 与源码一致
+        run: git diff --exit-code -- dist

@@ -4,6 +4,8 @@
 
 **面向中国开发者的离线 MCP 工具集**
 
+[![Test](https://github.com/MsNan/cn-dev-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/MsNan/cn-dev-mcp/actions/workflows/test.yml)
+
 节假日调休 · 工作日计算 · 身份证 / 信用代码 / 手机号校验 · 拼音 · 农历 · 行政区划 · uni-app / 小程序 / Element Plus / Vant 文档速查
 
 ![license](https://img.shields.io/badge/license-MIT-green) ![tools](https://img.shields.io/badge/tools-13-blue) ![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen) ![MCP](https://img.shields.io/badge/MCP-stdio-purple)

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc && cp src/data/pca-code.json dist/data/ && chmod +x dist/index.js",
-    "test": "npm run build && node --test test/"
+    "test": "npm run build && node --test"
   },
   "keywords": [
     "mcp",
