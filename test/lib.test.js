@@ -37,6 +37,9 @@ test('身份证校验', () => {
   assert.equal(validateIdCard('110105194912310021').valid, false)
   assert.equal(validateIdCard('110105194913310028').valid, false)
   assert.equal(validateIdCard('abc').valid, false)
+  // 15 位一代证也要检查省级代码（00 不是任何省份）
+  assert.equal(validateIdCard('110105491231002').valid, true)
+  assert.equal(validateIdCard('000105491231002').valid, false)
 })
 test('统一社会信用代码校验', () => {
   assert.equal(validateUscc('91350100M000100Y43').valid, true)

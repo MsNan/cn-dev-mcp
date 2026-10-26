@@ -15,6 +15,8 @@ export function validateIdCard(input) {
     const s = input.trim().toUpperCase(), errors = [];
     if (/^\d{15}$/.test(s)) {
         const y = 1900 + +s.slice(6, 8), m = +s.slice(8, 10), d = +s.slice(10, 12);
+        if (!regionName(s.slice(0, 2)))
+            errors.push('前两位不是有效的省级行政区划代码');
         checkBirth(y, m, d, errors);
         return { valid: !errors.length, errors, version: '15 位（一代）', birthday: `${y}-${s.slice(8, 10)}-${s.slice(10, 12)}`, gender: +s[14] % 2 ? '男' : '女', region: regionName(s.slice(0, 6)) };
     }
