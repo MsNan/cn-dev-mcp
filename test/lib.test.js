@@ -69,6 +69,11 @@ test('农历', () => {
   assert.equal(lunarToSolar(2026, 8, 15).solar, '2026-09-25')
   assert.equal(lunarToSolar(2027, 1, 1).solar, '2027-02-06')
   assert.throws(() => lunarToSolar(2026, 3, 1, true))
+  // 不存在的日期要报错，不能被悄悄换算成别的日子
+  assert.throws(() => solarToLunar('2024-02-30'), /无效日期/)
+  assert.throws(() => solarToLunar('2023-04-31'), /无效日期/)
+  assert.equal(solarToLunar('2024-02-29').solar, '2024-02-29')
+  assert.throws(() => lunarToSolar(2024, 1, 30), /只有 29 天/)
 })
 test('文档检索', () => {
   assert.equal(searchDocs('分包').results[0].lib === 'uni-app' || searchDocs('分包').results[0].lib === '微信小程序', true)

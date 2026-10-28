@@ -1,7 +1,7 @@
 import { pinyin } from 'pinyin-pro'
 // @ts-ignore 无类型声明
 import lunarPkg from 'lunar-javascript'
-const { Solar, Lunar } = lunarPkg as any
+const { Solar, Lunar, LunarMonth, SolarUtil } = lunarPkg as any
 
 export function toPinyin(text: string, tone: 'symbol' | 'num' | 'none' = 'symbol', mode: 'full' | 'initial' = 'full') {
   if (text.length > 5000) throw new Error('文本过长（上限 5000 字）')
@@ -29,8 +29,9 @@ export function solarToLunar(date: string) {
   if (!m) throw new Error('日期格式应为 YYYY-MM-DD')
   const [y, mo, d] = [+m[1], +m[2], +m[3]]
   if (y < 1900 || y > 2100) throw new Error('支持 1900–2100 年')
+  // lunar-javascript 只检查日在 1–31 之间，2 月 30 日、4 月 31 日不会报错，要自己按月份天数判断
+  if (mo < 1 || mo > 12 || d < 1 || d > SolarUtil.getDaysOfMonth(y, mo)) throw new Error('无效日期')
   const s = Solar.fromYmd(y, mo, d)
-  if (s.getMonth() !== mo || s.getDay() !== d) throw new Error('无效日期')
   return describe(s.getLunar())
 }
 export function lunarToSolar(year: number, month: number, day: number, isLeapMonth = false) {
@@ -39,7 +40,9 @@ export function lunarToSolar(year: number, month: number, day: number, isLeapMon
     const leap = (lunarPkg as any).LunarYear.fromYear(year).getLeapMonth()
     if (leap !== month) throw new Error(leap ? `${year} 年闰月为闰${leap}月` : `${year} 年没有闰月`)
   }
+  // 库对小月三十直接抛英文错误，先查当月天数，给出中文提示
+  const days = LunarMonth.fromYm(year, isLeapMonth ? -month : month).getDayCount()
+  if (day > days) throw new Error(`农历 ${year} 年${isLeapMonth ? '闰' : ''}${month}月只有 ${days} 天`)
   const l = Lunar.fromYmd(year, isLeapMonth ? -month : month, day)
-  if (l.getDay() !== day) throw new Error('该农历日期不存在（小月没有三十）')
   return describe(l)
 }
