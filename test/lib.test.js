@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { dayInfo, yearSchedule, countWorkdays, addWorkdays } from '../dist/lib/holiday.js'
-import { validateIdCard, validateUscc, validateMobile } from '../dist/lib/validate.js'
+import { validateIdCard, validateUscc, validateMobile, validateBankCard, luhnCheck } from '../dist/lib/validate.js'
 import { regionLookup } from '../dist/lib/region.js'
 import { toPinyin, solarToLunar, lunarToSolar } from '../dist/lib/text.js'
 import { searchDocs, getDoc } from '../dist/lib/docs.js'
@@ -79,4 +79,27 @@ test('文档检索', () => {
   assert.equal(searchDocs('分包').results[0].lib === 'uni-app' || searchDocs('分包').results[0].lib === '微信小程序', true)
   assert.ok(searchDocs('表单 校验', 'Element Plus').results.some((d) => d.id === 'el-form'))
   assert.ok(getDoc('uni.request').url.startsWith('https://'))
+})
+
+test('银行卡号：Luhn 与卡组织', () => {
+  const r = validateBankCard('4111 1111 1111 1111')
+  assert.equal(r.valid, true)
+  assert.equal(r.brandByPrefix, 'Visa')
+  assert.equal(r.masked, '411111******1111')
+  assert.equal(validateBankCard('4111-1111-1111-1112').valid, false)
+  assert.equal(validateBankCard('5555555555554444').brandByPrefix, 'Mastercard')
+  assert.equal(validateBankCard('2223003122003222').brandByPrefix, 'Mastercard')
+  assert.equal(validateBankCard('378282246310005').brandByPrefix, 'American Express')
+  assert.equal(validateBankCard('3530111333300000').brandByPrefix, 'JCB')
+  // 构造一个通过 Luhn 的 19 位 62 开头卡号
+  const base = '622202100012345678'
+  const check = [...'0123456789'].find((d) => luhnCheck(base + d))
+  const u = validateBankCard(base + check)
+  assert.equal(u.valid, true)
+  assert.equal(u.brandByPrefix, '银联 UnionPay')
+  assert.equal(validateBankCard('6222 0210 abc').valid, false)
+  assert.equal(validateBankCard('41111111111').valid, false)
+  assert.equal(validateBankCard('41111111111111111111').valid, false)
+  assert.equal(luhnCheck('79927398713'), true)
+  assert.equal(luhnCheck('79927398710'), false)
 })

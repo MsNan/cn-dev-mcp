@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { dayInfo, yearSchedule, countWorkdays, addWorkdays } from './lib/holiday.js'
-import { validateIdCard, validateUscc, validateMobile } from './lib/validate.js'
+import { validateIdCard, validateUscc, validateMobile, validateBankCard } from './lib/validate.js'
 import { regionLookup, REGION_META } from './lib/region.js'
 import { toPinyin, solarToLunar, lunarToSolar } from './lib/text.js'
 import { searchDocs, getDoc, DOC_LIBS } from './lib/docs.js'
@@ -24,6 +24,7 @@ export function createServer() {
   s.registerTool('validate_id_card', { title: '身份证号格式校验', description: '校验中国大陆居民身份证号格式、出生日期与校验位，解析出生日期、性别、地区。仅做格式校验，不查询、不核验真实身份', inputSchema: { id: z.string().describe('15 或 18 位身份证号') } }, wrap(({ id }) => validateIdCard(id)))
   s.registerTool('validate_uscc', { title: '统一社会信用代码校验', description: '校验 18 位统一社会信用代码的字符集与校验位（GB 32100-2015），解析登记管理部门、机构类别与地区。不查询工商信息', inputSchema: { code: z.string() } }, wrap(({ code }) => validateUscc(code)))
   s.registerTool('validate_mobile', { title: '手机号格式校验', description: '校验中国大陆 11 位手机号格式（支持 +86、空格、横线），按号段推测运营商', inputSchema: { phone: z.string() } }, wrap(({ phone }) => validateMobile(phone)))
+  s.registerTool('validate_bank_card', { title: '银行卡号校验', description: '校验银行卡号位数（12–19 位，支持空格/横线）与 Luhn 校验位，按前缀推测卡组织（银联/Visa/Mastercard/JCB/AmEx 等），返回脱敏卡号。不识别发卡行、不查询卡状态', inputSchema: { card: z.string().describe('银行卡号') } }, wrap(({ card }) => validateBankCard(card)))
 
   s.registerTool('pinyin', { title: '汉字转拼音', description: '把中文转换为拼音（带声调/数字声调/无声调）或首字母，自动处理常见多音字', inputSchema: { text: z.string(), tone: z.enum(['symbol', 'num', 'none']).optional().describe('symbol=带声调 num=数字声调 none=无声调，默认 symbol'), mode: z.enum(['full', 'initial']).optional().describe('full=全拼 initial=首字母') } }, wrap(({ text, tone, mode }) => toPinyin(text, tone, mode)))
   s.registerTool('solar_to_lunar', { title: '公历转农历', description: '公历转农历，返回农历日期、干支、生肖、节气、节日（1900–2100）', inputSchema: { date: DATE } }, wrap(({ date }) => solarToLunar(date)))

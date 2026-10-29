@@ -8,7 +8,7 @@
 
 节假日调休 · 工作日计算 · 身份证 / 信用代码 / 手机号校验 · 拼音 · 农历 · 行政区划 · uni-app / 小程序 / Element Plus / Vant 文档速查
 
-![license](https://img.shields.io/badge/license-MIT-green) ![tools](https://img.shields.io/badge/tools-13-blue) ![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen) ![MCP](https://img.shields.io/badge/MCP-stdio-purple)
+![license](https://img.shields.io/badge/license-MIT-green) ![tools](https://img.shields.io/badge/tools-14-blue) ![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen) ![MCP](https://img.shields.io/badge/MCP-stdio-purple)
 
 </div>
 
@@ -74,6 +74,7 @@ claude mcp add cn-dev -- npx -y github:MsNan/cn-dev-mcp
 | `validate_id_card` | 身份证号格式和校验位校验，解析生日、性别、地区 | “帮我写个表单校验，顺便测一下这个号码格式对不对” |
 | `validate_uscc` | 统一社会信用代码校验（GB 32100） | “这个信用代码校验位对吗？” |
 | `validate_mobile` | 手机号格式校验，按号段推测运营商 | “+86 138-0013-8000 格式对吗？” |
+| `validate_bank_card` | 银行卡号位数 + Luhn 校验位，按前缀推测卡组织，返回脱敏卡号 | “这个卡号是不是少输了一位？” |
 | `pinyin` | 汉字转拼音或首字母，能处理多音字 | “把城市列表按拼音首字母分组” |
 | `solar_to_lunar` | 公历转农历，含干支、生肖、节气、节日 | “2026-10-16 是农历几号？” |
 | `lunar_to_solar` | 农历转公历，支持闰月 | “农历 2027 年正月初一是哪天？” |

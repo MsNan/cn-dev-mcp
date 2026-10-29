@@ -65,3 +65,49 @@ export function validateMobile(input) {
     const carrier = CARRIER.find(([re]) => re.test(s))?.[1] ?? '未知（号段可能已携号转网）';
     return { valid: true, errors: [], normalized: s, carrierBySegment: carrier, note: '仅校验格式；运营商按号段推测，携号转网后可能不准确' };
 }
+/** Luhn（模 10）校验，输入为纯数字字符串 */
+export function luhnCheck(digits) {
+    let sum = 0;
+    for (let i = 0; i < digits.length; i++) {
+        let n = +digits[digits.length - 1 - i];
+        if (i % 2 === 1) {
+            n *= 2;
+            if (n > 9)
+                n -= 9;
+        }
+        sum += n;
+    }
+    return sum % 10 === 0;
+}
+function cardBrand(s) {
+    const p2 = +s.slice(0, 2), p4 = +s.slice(0, 4);
+    if (s.startsWith('62') || s.startsWith('81'))
+        return '银联 UnionPay';
+    if (p2 === 34 || p2 === 37)
+        return 'American Express';
+    if (p4 >= 3528 && p4 <= 3589)
+        return 'JCB';
+    if ((p2 >= 51 && p2 <= 55) || (p4 >= 2221 && p4 <= 2720))
+        return 'Mastercard';
+    if (s[0] === '4')
+        return 'Visa';
+    if (p2 === 36 || p2 === 38 || p2 === 39 || (+s.slice(0, 3) >= 300 && +s.slice(0, 3) <= 305))
+        return 'Diners Club';
+    return '未知';
+}
+/** 银行卡号格式与 Luhn 校验位校验；不识别发卡行、不判断卡是否存在 */
+export function validateBankCard(input) {
+    const s = input.replace(/[\s-]/g, '');
+    if (!/^\d+$/.test(s))
+        return { valid: false, errors: ['银行卡号只能包含数字（可带空格或横线分隔）'] };
+    if (s.length < 12 || s.length > 19)
+        return { valid: false, errors: [`银行卡号一般为 12–19 位，当前 ${s.length} 位`] };
+    const luhn = luhnCheck(s), errors = [];
+    if (!luhn)
+        errors.push('未通过 Luhn 校验（常见原因：输错或漏了一位）');
+    return {
+        valid: !errors.length, errors, normalized: s, length: s.length, luhn, brandByPrefix: cardBrand(s),
+        masked: s.slice(0, 6) + '*'.repeat(s.length - 10) + s.slice(-4),
+        note: '仅校验位数与 Luhn 校验位；卡组织按卡号前缀推测。少数早期国内借记卡不符合 Luhn，表单里建议只做提示、不要硬拦截。不识别发卡行，不判断卡是否真实可用',
+    };
+}
