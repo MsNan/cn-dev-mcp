@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { dayInfo, yearSchedule, countWorkdays, addWorkdays } from '../dist/lib/holiday.js'
-import { validateIdCard, validateUscc, validateMobile, validateBankCard, luhnCheck } from '../dist/lib/validate.js'
+import { validateIdCard, validateUscc, validateMobile, validateBankCard, identifyExpressNo, luhnCheck } from '../dist/lib/validate.js'
 import { regionLookup } from '../dist/lib/region.js'
 import { toPinyin, solarToLunar, lunarToSolar } from '../dist/lib/text.js'
 import { searchDocs, getDoc } from '../dist/lib/docs.js'
@@ -102,4 +102,40 @@ test('银行卡号：Luhn 与卡组织', () => {
   assert.equal(validateBankCard('41111111111111111111').valid, false)
   assert.equal(luhnCheck('79927398713'), true)
   assert.equal(luhnCheck('79927398710'), false)
+})
+
+
+test('快递单号：高可靠度前缀；纯数字不猜测', () => {
+  const sf = identifyExpressNo('SF 1023 4567 8912')
+  assert.equal(sf.valid, true)
+  assert.equal(sf.carrier, '顺丰速运')
+  assert.equal(sf.code, 'sf')
+  assert.equal(sf.confidence, 'high')
+  assert.equal(sf.normalized, 'SF102345678912')
+
+  assert.equal(identifyExpressNo('YT7500001234567').carrier, '圆通速递')
+  assert.equal(identifyExpressNo('JT3300012345678').carrier, '极兔速递')
+  assert.equal(identifyExpressNo('JDVA00123456789').carrier, '京东物流')
+  assert.equal(identifyExpressNo('zto123456789012').carrier, '中通快递')
+  assert.equal(identifyExpressNo('STO9876543210').carrier, '申通快递')
+  assert.equal(identifyExpressNo('YD4310001234567').carrier, '韵达速递')
+  assert.equal(identifyExpressNo('DPK0001234567').carrier, '德邦快递')
+  assert.equal(identifyExpressNo('CGD0000123456').carrier, '菜鸟国际')
+  assert.equal(identifyExpressNo('EA123456789CN').carrier, '邮政/EMS（万国邮联）')
+  assert.equal(identifyExpressNo('SF1234567890US').carrier, '顺丰速运（国际）')
+
+  const digits = identifyExpressNo('758123456789')
+  assert.equal(digits.valid, true)
+  assert.equal(digits.confidence, 'none')
+  assert.deepEqual(digits.matches, [])
+  assert.match(digits.note, /不猜测|手动选择/)
+
+  assert.equal(identifyExpressNo('').valid, false)
+  assert.equal(identifyExpressNo('SF@@@').valid, false)
+  assert.equal(identifyExpressNo('AB').valid, false)
+  // 未知字母前缀：不硬报错，但无匹配
+  const unk = identifyExpressNo('XYZ1234567890')
+  assert.equal(unk.valid, true)
+  assert.equal(unk.confidence, 'none')
+  assert.deepEqual(unk.matches, [])
 })

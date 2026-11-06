@@ -111,3 +111,77 @@ export function validateBankCard(input) {
         note: '仅校验位数与 Luhn 校验位；卡组织按卡号前缀推测。少数早期国内借记卡不符合 Luhn，表单里建议只做提示、不要硬拦截。不识别发卡行，不判断卡是否真实可用',
     };
 }
+/**
+ * 按运单号字母前缀推测快递公司。
+ * 只做高可靠度前缀匹配（SF/YT/JD/JT/ZTO/STO/YD/DPK/万国邮联等）；
+ * 纯数字号段各家高度重叠，本工具不猜测，返回 matches=[] 并提示用户手动选择。
+ * 不联网查询物流轨迹，不判断单号是否真实存在。
+ */
+export function identifyExpressNo(input) {
+    const normalized = input.replace(/[\s\-]/g, '').toUpperCase();
+    if (!normalized)
+        return { valid: false, errors: ['运单号为空'], normalized: '', matches: [], note: '仅按字母前缀离线推测，不查询物流轨迹' };
+    if (!/^[A-Z0-9]+$/.test(normalized)) {
+        return { valid: false, errors: ['运单号只能包含字母和数字（可带空格或横线）'], normalized, matches: [], note: '仅按字母前缀离线推测，不查询物流轨迹' };
+    }
+    if (normalized.length < 8 || normalized.length > 32) {
+        return { valid: false, errors: [`运单号长度异常（当前 ${normalized.length} 位，常见 10–20 位）`], normalized, matches: [], note: '仅按字母前缀离线推测，不查询物流轨迹' };
+    }
+    const matches = [];
+    const push = (carrier, code, rule) => {
+        matches.push({ carrier, code, confidence: 'high', rule });
+    };
+    // 顺序：更具体的前缀先匹配；命中后不再套用弱规则
+    if (/^SF\d{10,15}$/.test(normalized))
+        push('顺丰速运', 'sf', 'SF + 10–15 位数字');
+    else if (/^SF\d{8,12}[A-Z]{2}$/.test(normalized))
+        push('顺丰速运（国际）', 'sf', 'SF + 数字 + 2 位国别码');
+    else if (/^YT\d{10,15}$/.test(normalized))
+        push('圆通速递', 'yto', 'YT + 10–15 位数字');
+    else if (/^JT\d{10,15}$/.test(normalized))
+        push('极兔速递', 'jt', 'JT + 10–15 位数字');
+    else if (/^JD[A-Z0-9]{10,16}$/.test(normalized))
+        push('京东物流', 'jd', 'JD/JDV/JDX 等 + 字母数字');
+    else if (/^ZTO\d{8,18}$/.test(normalized))
+        push('中通快递', 'zto', 'ZTO + 数字');
+    else if (/^STO\d{8,18}$/.test(normalized))
+        push('申通快递', 'sto', 'STO + 数字');
+    else if (/^YD\d{8,18}$/.test(normalized))
+        push('韵达速递', 'yunda', 'YD + 数字');
+    else if (/^DPK\d{8,18}$/.test(normalized))
+        push('德邦快递', 'deppon', 'DPK + 数字');
+    else if (/^(CGD|LP)\d{8,18}$/.test(normalized))
+        push('菜鸟国际', 'cainiao', 'CGD/LP + 数字');
+    else if (/^[A-Z]{2}\d{9}[A-Z]{2}$/.test(normalized))
+        push('邮政/EMS（万国邮联）', 'ems', '2 字母 + 9 数字 + 2 国别码（如 …CN）');
+    if (matches.length) {
+        return {
+            valid: true,
+            errors: [],
+            normalized,
+            matches,
+            carrier: matches[0].carrier,
+            code: matches[0].code,
+            confidence: 'high',
+            note: '高可靠度前缀匹配；规则会随各家号段调整，最终以面单或官方查询为准。不联网、不判断单号是否真实存在',
+        };
+    }
+    if (/^\d+$/.test(normalized)) {
+        return {
+            valid: true,
+            errors: [],
+            normalized,
+            matches: [],
+            confidence: 'none',
+            note: '纯数字运单号各家号段高度重叠且会随年份扩容，本工具不做猜测。请让用户手动选择快递公司后再查询轨迹',
+        };
+    }
+    return {
+        valid: true,
+        errors: [],
+        normalized,
+        matches: [],
+        confidence: 'none',
+        note: '未命中已知高可靠度前缀（SF/YT/JD/JT/ZTO/STO/YD/DPK/CGD/LP/万国邮联）。可能是企业定制号段或新兴快递，请手动选择',
+    };
+}
