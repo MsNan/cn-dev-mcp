@@ -1,7 +1,8 @@
 import { HOLIDAYS, PENDING_YEARS } from '../data/holidays.js'
 
-export type DayType = '法定节假日' | '调休上班' | '周末' | '工作日'
-export interface DayInfo { date: string; weekday: string; type: DayType; isWorkday: boolean; holiday?: string; dataAvailable: boolean; note?: string }
+// 法定节假日：放假办法规定的当天；放假调休：通知里放假区间的其余日子（调休或周末）
+export type DayType = '法定节假日' | '放假调休' | '调休上班' | '周末' | '工作日'
+export interface DayInfo { date: string; weekday: string; type: DayType; isWorkday: boolean; statutory: boolean; holiday?: string; dataAvailable: boolean; note?: string }
 
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 export function parseDate(s: string): Date {
@@ -15,9 +16,11 @@ export const fmt = (d: Date) => d.toISOString().slice(0, 10)
 
 const index = new Map<string, string>()
 const workSet = new Set<string>()
+const statutorySet = new Set<string>()
 for (const y of Object.values(HOLIDAYS)) {
   for (const h of y.holidays) for (let d = parseDate(h.start); fmt(d) <= h.end; d = new Date(d.getTime() + 864e5)) index.set(fmt(d), h.name)
   y.workdays.forEach((w) => workSet.add(w))
+  y.statutory.forEach((w) => statutorySet.add(w))
 }
 
 export function yearNote(year: number): string | undefined {
@@ -29,8 +32,8 @@ export function yearNote(year: number): string | undefined {
 export function dayInfo(date: string): DayInfo {
   const d = parseDate(date), key = fmt(d), year = d.getUTCFullYear()
   const wd = d.getUTCDay(), weekend = wd === 0 || wd === 6
-  const base = { date: key, weekday: WEEK[wd], dataAvailable: !!HOLIDAYS[year], note: yearNote(year) }
-  if (index.has(key)) return { ...base, type: '法定节假日', isWorkday: false, holiday: index.get(key) }
+  const base = { date: key, weekday: WEEK[wd], statutory: statutorySet.has(key), dataAvailable: !!HOLIDAYS[year], note: yearNote(year) }
+  if (index.has(key)) return { ...base, type: base.statutory ? '法定节假日' : '放假调休', isWorkday: false, holiday: index.get(key) }
   if (workSet.has(key)) return { ...base, type: '调休上班', isWorkday: true }
   return weekend ? { ...base, type: '周末', isWorkday: false } : { ...base, type: '工作日', isWorkday: true }
 }
@@ -38,7 +41,7 @@ export function dayInfo(date: string): DayInfo {
 export function yearSchedule(year: number) {
   const y = HOLIDAYS[year]
   if (!y) return { year, available: false, note: yearNote(year) }
-  return { year, available: true, notice: y.notice, source: y.url, holidays: y.holidays.map((h) => ({ ...h, days: (parseDate(h.end).getTime() - parseDate(h.start).getTime()) / 864e5 + 1 })), workdays: y.workdays }
+  return { year, available: true, notice: y.notice, source: y.url, holidays: y.holidays.map((h) => ({ ...h, days: (parseDate(h.end).getTime() - parseDate(h.start).getTime()) / 864e5 + 1, statutory: y.statutory.filter((d) => d >= h.start && d <= h.end) })), workdays: y.workdays }
 }
 
 /** 统计 [start, end] 闭区间内的工作日 */
@@ -54,7 +57,7 @@ export function countWorkdays(start: string, end: string) {
   return { start: fmt(a), end: fmt(b), totalDays: total, workdays: work, restDays: total - work, notes: [...notes] }
 }
 
-/** 从 date 起往后（n<0 往前）第 n 个工作日，不含当天 */
+/** 从 date 起往后（n<0 往前）第 n 个工作日，不含当天；n = 0 原样返回 date（即使当天放假） */
 export function addWorkdays(date: string, n: number) {
   if (!Number.isInteger(n) || Math.abs(n) > 2000) throw new Error('n 必须是绝对值不超过 2000 的整数')
   let d = parseDate(date); const step = n >= 0 ? 1 : -1; let left = Math.abs(n)

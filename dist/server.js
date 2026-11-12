@@ -1,6 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { dayInfo, yearSchedule, countWorkdays, addWorkdays } from './lib/holiday.js';
+import { HOLIDAYS, PENDING_YEARS } from './data/holidays.js';
+const HOLIDAY_YEARS = `内置国务院办公厅 ${Object.keys(HOLIDAYS).join('、')} 年放假通知；${PENDING_YEARS.join('、')} 年尚未公布`;
 import { validateIdCard, validateUscc, validateMobile, validateBankCard, identifyExpressNo } from './lib/validate.js';
 import { regionLookup, REGION_META } from './lib/region.js';
 import { toPinyin, solarToLunar, lunarToSolar } from './lib/text.js';
@@ -18,10 +20,10 @@ const wrap = (fn) => async (a) => {
 const DATE = z.string().describe('日期，格式 YYYY-MM-DD');
 export function createServer() {
     const s = new McpServer({ name: 'cn-dev-mcp', version: VERSION });
-    s.registerTool('holiday_check', { title: '节假日/调休查询', description: '查询某天是法定节假日、调休上班日、周末还是工作日（内置国务院办公厅 2025、2026 年放假通知；2027 年尚未公布）', inputSchema: { date: DATE } }, wrap(({ date }) => dayInfo(date)));
+    s.registerTool('holiday_check', { title: '节假日/调休查询', description: `查询某天是法定节假日、放假调休、调休上班日、周末还是工作日（${HOLIDAY_YEARS}）`, inputSchema: { date: DATE } }, wrap(({ date }) => dayInfo(date)));
     s.registerTool('holiday_year', { title: '全年放假安排', description: '列出某年全部法定节假日放假区间与调休上班日，附官方通知来源', inputSchema: { year: z.number().int().describe('年份，如 2026') } }, wrap(({ year }) => yearSchedule(year)));
     s.registerTool('workday_count', { title: '工作日天数统计', description: '统计两个日期之间（含首尾）的工作日与休息日天数，已考虑节假日与调休', inputSchema: { start: DATE, end: DATE } }, wrap(({ start, end }) => countWorkdays(start, end)));
-    s.registerTool('workday_add', { title: '第 N 个工作日', description: '计算某日期之后（n 为负数则之前）的第 n 个工作日，常用于"3 个工作日内发货"之类的截止日期', inputSchema: { date: DATE, n: z.number().int().describe('工作日数，可为负') } }, wrap(({ date, n }) => addWorkdays(date, n)));
+    s.registerTool('workday_add', { title: '第 N 个工作日', description: '计算某日期之后（n 为负数则之前）的第 n 个工作日，常用于"3 个工作日内发货"之类的截止日期。口径是国家放假安排：调休上班的周六日算工作日，不含当天，n=0 原样返回', inputSchema: { date: DATE, n: z.number().int().describe('工作日数，可为负') } }, wrap(({ date, n }) => addWorkdays(date, n)));
     s.registerTool('validate_id_card', { title: '身份证号格式校验', description: '校验中国大陆居民身份证号格式、出生日期与校验位，解析出生日期、性别、地区。仅做格式校验，不查询、不核验真实身份', inputSchema: { id: z.string().describe('15 或 18 位身份证号') } }, wrap(({ id }) => validateIdCard(id)));
     s.registerTool('validate_uscc', { title: '统一社会信用代码校验', description: '校验 18 位统一社会信用代码的字符集与校验位（GB 32100-2015），解析登记管理部门、机构类别与地区。不查询工商信息', inputSchema: { code: z.string() } }, wrap(({ code }) => validateUscc(code)));
     s.registerTool('validate_mobile', { title: '手机号格式校验', description: '校验中国大陆 11 位手机号格式（支持 +86、空格、横线），按号段推测运营商', inputSchema: { phone: z.string() } }, wrap(({ phone }) => validateMobile(phone)));

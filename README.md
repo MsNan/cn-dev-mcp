@@ -67,7 +67,7 @@ claude mcp add cn-dev -- npx -y github:MsNan/cn-dev-mcp
 
 | 工具 | 作用 | 你可以这样问 AI |
 | --- | --- | --- |
-| `holiday_check` | 判断某天是法定节假日、调休上班、周末还是工作日 | “2026 年 10 月 10 号要上班吗？” |
+| `holiday_check` | 判断某天是法定节假日、放假调休、调休上班、周末还是工作日（`statutory` 标出放假办法规定的 13 个法定日） | “2026 年 10 月 10 号要上班吗？” |
 | `holiday_year` | 某年全部放假区间和调休日，附官方通知 | “列出 2026 年的放假安排” |
 | `workday_count` | 两个日期之间有几个工作日（已算节假日和调休） | “10 月有几个工作日？” |
 | `workday_add` | 第 N 个工作日是哪天 | “9 月 30 号下单，3 个工作日内发货，最晚哪天？” |
@@ -104,8 +104,8 @@ claude mcp add cn-dev -- npx -y github:MsNan/cn-dev-mcp
 
 | 数据 | 范围 | 来源 |
 | --- | --- | --- |
-| 节假日 / 调休 | 2025、2026 年 | [2025 年通知（国办发明电〔2024〕12号）](https://www.gov.cn/zhengce/content/202411/content_6986382.htm)、[2026 年通知（国办发明电〔2025〕7号）](https://www.gov.cn/zhengce/content/202511/content_7047090.htm) |
-| 2027 年 | **国务院尚未公布**（截至 2026-10-16） | 暂时只按周末计算，返回结果会带上提示；官方公布后会尽快更新 |
+| 节假日 / 调休 | 2025、2026、2027 年 | [2025 年通知（国办发明电〔2024〕12号）](https://www.gov.cn/zhengce/content/202411/content_6986382.htm)、[2026 年通知（国办发明电〔2025〕7号）](https://www.gov.cn/zhengce/content/202511/content_7047090.htm)、[2027 年通知（国办发明电〔2026〕10号）](https://www.gov.cn/zhengce/content/202611/content_7085101.htm) |
+| 2028 年 | **国务院尚未公布** | 暂时只按周末计算，返回结果会带上提示；官方公布后会尽快更新 |
 | 行政区划 | 31 个省级行政区的省、市、县三级（不含港澳台） | [modood/Administrative-divisions-of-China](https://github.com/modood/Administrative-divisions-of-China)（整理自国家统计局） |
 | 农历 | 1900 – 2100 年 | [lunar-javascript](https://github.com/6tail/lunar-javascript) |
 | 拼音 | — | [pinyin-pro](https://github.com/zh-lx/pinyin-pro) |

@@ -12,11 +12,13 @@ export function parseDate(s) {
 export const fmt = (d) => d.toISOString().slice(0, 10);
 const index = new Map();
 const workSet = new Set();
+const statutorySet = new Set();
 for (const y of Object.values(HOLIDAYS)) {
     for (const h of y.holidays)
         for (let d = parseDate(h.start); fmt(d) <= h.end; d = new Date(d.getTime() + 864e5))
             index.set(fmt(d), h.name);
     y.workdays.forEach((w) => workSet.add(w));
+    y.statutory.forEach((w) => statutorySet.add(w));
 }
 export function yearNote(year) {
     if (HOLIDAYS[year])
@@ -28,9 +30,9 @@ export function yearNote(year) {
 export function dayInfo(date) {
     const d = parseDate(date), key = fmt(d), year = d.getUTCFullYear();
     const wd = d.getUTCDay(), weekend = wd === 0 || wd === 6;
-    const base = { date: key, weekday: WEEK[wd], dataAvailable: !!HOLIDAYS[year], note: yearNote(year) };
+    const base = { date: key, weekday: WEEK[wd], statutory: statutorySet.has(key), dataAvailable: !!HOLIDAYS[year], note: yearNote(year) };
     if (index.has(key))
-        return { ...base, type: '法定节假日', isWorkday: false, holiday: index.get(key) };
+        return { ...base, type: base.statutory ? '法定节假日' : '放假调休', isWorkday: false, holiday: index.get(key) };
     if (workSet.has(key))
         return { ...base, type: '调休上班', isWorkday: true };
     return weekend ? { ...base, type: '周末', isWorkday: false } : { ...base, type: '工作日', isWorkday: true };
@@ -39,7 +41,7 @@ export function yearSchedule(year) {
     const y = HOLIDAYS[year];
     if (!y)
         return { year, available: false, note: yearNote(year) };
-    return { year, available: true, notice: y.notice, source: y.url, holidays: y.holidays.map((h) => ({ ...h, days: (parseDate(h.end).getTime() - parseDate(h.start).getTime()) / 864e5 + 1 })), workdays: y.workdays };
+    return { year, available: true, notice: y.notice, source: y.url, holidays: y.holidays.map((h) => ({ ...h, days: (parseDate(h.end).getTime() - parseDate(h.start).getTime()) / 864e5 + 1, statutory: y.statutory.filter((d) => d >= h.start && d <= h.end) })), workdays: y.workdays };
 }
 /** 统计 [start, end] 闭区间内的工作日 */
 export function countWorkdays(start, end) {
@@ -60,7 +62,7 @@ export function countWorkdays(start, end) {
     }
     return { start: fmt(a), end: fmt(b), totalDays: total, workdays: work, restDays: total - work, notes: [...notes] };
 }
-/** 从 date 起往后（n<0 往前）第 n 个工作日，不含当天 */
+/** 从 date 起往后（n<0 往前）第 n 个工作日，不含当天；n = 0 原样返回 date（即使当天放假） */
 export function addWorkdays(date, n) {
     if (!Number.isInteger(n) || Math.abs(n) > 2000)
         throw new Error('n 必须是绝对值不超过 2000 的整数');
